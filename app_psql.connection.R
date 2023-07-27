@@ -10,7 +10,7 @@ ui <- fluidPage(
             sidebarLayout(
                 sidebarPanel(
                 # HTML("<br>"),
-                renderUI("names_selector"),
+                uiOutput("names_selector"),
                 # selectInput("usr", "Чаёвник...", 
                 #             choices = 1:2), ###
                 HTML("<br>"),
@@ -21,6 +21,11 @@ ui <- fluidPage(
                 actionButton("refresh", "Обновить!")
             ),
             mainPanel(
+                HTML("<br>"),
+                uiOutput("little_title"),
+                HTML("<br>"),
+                tableOutput("res_table"),
+                HTML("<br>"),
                 sliderInput("bins", 
                             "Number of bins:",
                             min = 1,
@@ -58,11 +63,15 @@ server <- function(input, output) {
                              format = "%d/%m/%y"), 
                proof = c("Jon", "John", "Johan", "Joe", "Ju", "Go"))
     
-    users <- reactive({sort(unique(c(testdf$name1, testdf$name2)))})
+    users <- reactive({unique(c(testdf$name1, testdf$name2))})
     
     output$names_selector <- renderUI({
-        selectInput("usr", "Gghsg", value = users()) 
+        selectInput("usr", "Чаёвник", choices = users()) 
     })
+    
+    output$little_title <- renderUI({paste0("Результаты поиска чаепитий для ", 
+                                          input$usr,
+                                          ":")})
 
 # Dummy -------------------------------------------------------------------
     output$distPlot <- renderPlot({
@@ -72,7 +81,21 @@ server <- function(input, output) {
              xlab = 'Waiting time to next eruption (in mins)',
              main = 'Histogram of waiting times')
     })
+    
+    
+    
+    observeEvent(input$refresh, {
+        df <- reactive({
+            testdf %>% 
+                filter(name1 == input$usr | name2 == input$usr) %>% 
+                transmute(
+                    `С кем:` = case_when(name1 == input$usr ~ name2, TRUE ~ name1), 
+                    `Когда:` = as.character(dat), 
+                    `Подтверждает:` = proof)
+        })
+        
+        output$res_table <- renderTable({df()})
+    })
 }
-
 # Run the application 
 shinyApp(ui = ui, server = server)
