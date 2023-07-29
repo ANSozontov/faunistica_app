@@ -4,7 +4,7 @@ library(telegram.bot)
 
 users <- data.frame(tlg_user_id = numeric(), name = character())
 hash <- character()
-bot <- Bot(token = "6613090516:AAEIH0xcGZj3cYkZKW6kQ4ox9dow0t4zfVw")
+bot <- Bot(token = scan("/var/mytoken", what = "", quiet = TRUE))
 # manual bot --------------------------------------------------------------
 
 echo <- function(bot, update){
@@ -90,7 +90,7 @@ inline_handler <- CommandHandler('menu', function(bot, update) {
     bot$sendMessage(update$message$chat_id, text, reply_markup = RKM)
 })
 
-updater <- Updater(token = "6613090516:AAEIH0xcGZj3cYkZKW6kQ4ox9dow0t4zfVw")
+updater <- Updater(token = scan("/var/mytoken", what = "", quiet = TRUE))
 
 updater <- updater + 
     start_handler + 
@@ -162,7 +162,7 @@ echo <- function(bot, update){
     }
 }
 
-updater <- Updater(token = "6613090516:AAEIH0xcGZj3cYkZKW6kQ4ox9dow0t4zfVw")
+updater <- Updater(token = scan("/var/mytoken", what = "", quiet = TRUE))
 
 updater <- updater + 
     menu_handler +
