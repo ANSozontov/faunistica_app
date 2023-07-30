@@ -1,8 +1,7 @@
 # initial -----------------------------------------------------------------
-# library(shiny)
-# library(shinyalert)
 library(telegram.bot)
-# library(RPostgreSQL)
+library(RPostgreSQL)
+# library(tidyverse)
 
 con_config <- list(database = "rdatabase",
                    hostname = "localhost",
@@ -20,18 +19,18 @@ con <- dbConnect(dbDriver("PostgreSQL"),
 # tlg date to regular format
 # as.POSIXct(update[[i]]$message$date, origin="1970-01-01") 
 
-
-users <- rbind(users, data.frame(tlg_user_id = 276388547, 
-                          name = "Ans",
-                          hash = "",
-                          hash_date = NA))
-
+# Postgres ----------------------------------------------------------------
+# DBI::dbRemoveTable(con, "users")
+# users <- data.frame(tlg_user_id = 276388547, name = "Ans",
+#                     hash = "", hash_date = Sys.time())
+# DBI::dbCreateTable(con, "users", users)
+# DBI::dbGetQuery(con, "Select * from users;")
+# DBI::dbWriteTable(con, "users", users, append = TRUE, row.names = FALSE)
+# rm(users)
+# DBI::dbSendQuery(con, "DELETE FROM users WHERE name = 'Ans';")
+# DBI::dbClearResult(DBI::dbListResults(con)[[1]])
 # bot3 --------------------------------------------------------------------
 user_name = FALSE
-users <- data.frame(tlg_user_id = NA, 
-                    name = "t_b2b9eb4",
-                    hash = "",
-                    hash_date = Sys.time())
 bot <- Bot(token = scan("/var/mytoken", what = "", quiet = TRUE))
 # hash <- character()
 
@@ -59,16 +58,32 @@ MessageFilters$flt_auth <- BaseFilter(function(message) {
 
 fun_auth <- function(bot, update){
     tlg_usr_id <- update$message$from$id
-    if(!(tlg_usr_id %in% users$tlg_user_id)) {
+    all_ids <- DBI::dbGetQuery(con, "SELECT tlg_user_id FROM users;")$tlg_user_id 
+    if(!(tlg_usr_id %in% all_ids)) {
         bot$sendMessage(chat_id = update$message$chat_id, 
             text = "Вас нет среди зарегистрированных пользователей")
     } else{
         tmp <- paste0(sample(c(0:9, LETTERS), 6, replace = TRUE), collapse = "")
-        users$hash[users$tlg_user_id == tlg_usr_id] <<- cli::hash_md5(tmp)
-        users$hash_date[users$tlg_user_id == tlg_usr_id] <<- Sys.time()
-        bot$sendMessage(chat_id = update$message$chat_id,
-                    text = paste0("Ваш код доcтупа: ```", tmp, "```"), 
-                    parse_mode = 'Markdown')
+        tm <- Sys.time()
+        DBI::dbSendQuery(con, paste0(
+            "UPDATE users SET hash = '", 
+            cli::hash_md5(tmp), 
+            "', hash_date = '", 
+            Sys.time(),
+            "' WHERE tlg_user_id = '", 
+            tlg_usr_id, 
+            "';"))
+        bot$sendMessage(chat_id = update$message$chat_id, parse_mode = 'Markdown',
+            text = paste0(
+                "Ваш код доcтупа: \n```", 
+                tmp, "```",
+                "\n \nСгенерирован```", 
+                format(tm, "%d %b %Y"), 
+                "``` \nСрок действия до ",
+                format(tm + 600, "%H:%M:%S"), 
+                "\nуральского часового пояса (GMT + 5)"
+            )
+        )
     }
 }
 
@@ -103,6 +118,20 @@ fun_supp <- function(bot, update){
         text ="Да батюшки! Помощь потребовалась? Так её ж нет пока ещё...")
 }
 
+MessageFilters$flt_stat <- BaseFilter(function(message) {
+    grepl(x = message$text, ignore.case = TRUE,
+          pattern = 'статистика|stats|stat|statistics|обзор|summary')
+})
+
+fun_stat <- function(bot, update){
+    bot$sendMessage(chat_id = update$message$chat_id, 
+                    reply_markup = ReplyKeyboardRemove(),
+                    text = paste0("Статистики тоже пока ещё нет... ",
+                        "\nНо вы можете помочь рас этим разработчику. ", 
+                        "\nРаз у вас есть доступ к боту, то и контакты разработчика тоже есть))0)")
+    )
+}
+
 MessageFilters$flt_regi <- BaseFilter(function(message) {
     grepl(x = message$text, ignore.case = TRUE,
           pattern = 'Регистрация в проекте|регистрация|register')
@@ -110,12 +139,17 @@ MessageFilters$flt_regi <- BaseFilter(function(message) {
 
 fun_regi <- function(bot, update){ 
     tlg_usr_id <- update$message$from$id
+    all_ids <- DBI::dbGetQuery(con, "SELECT DISTINCT tlg_user_id FROM users;") 
     # bot$sendMessage(chat_id = update$message$chat_id, 
     #                 text = paste0("your id is ", tlg_usr_id))
-    if(tlg_usr_id %in% users$tlg_user_id){
+    if(tlg_usr_id %in% all_ids){
+        tmp <- DBI::dbGetQuery(con, paste0(
+            "SELECT name FROM users WHERE tlg_user_id = ",
+            tlg_usr_id,
+            ";"
+        ))[[1]]
         bot$sendMessage(chat_id = update$message$chat_id, 
-            text = paste0("Вы уже зарегистрированы под именем ", 
-                users$name[users$tlg_user_id == tlg_usr_id])
+            text = paste0("Вы уже зарегистрированы под именем ", tmp)
         )
     } else {
         IKM <- InlineKeyboardMarkup(
@@ -132,7 +166,6 @@ fun_regi <- function(bot, update){
                         parse_mode = 'HTML',
                         disable_web_page_preview = TRUE,
                         reply_markup = IKM)
-        
     }
 }
 
@@ -157,12 +190,15 @@ answer_cb <- function(bot, update) {
 }
 
 fun_echo <- function(bot, update){
-    if(user_name){ 
-        users <<- rbind(users, data.frame(
-            tlg_user_id = update$message$from$id, 
-            name = update$message$text, 
-            hash = "", 
-            hash_date = NA))
+    if(user_name){
+        DBI::dbWriteTable(con, "users", 
+            data.frame(
+                tlg_user_id = update$message$from$id,
+                name = update$message$text,
+                hash = "",
+                hash_date = Sys.time()),
+            append = TRUE, row.names = FALSE
+        )
         user_name <<- FALSE
         bot$sendMessage(chat_id = update$message$chat_id, 
             text = "Приятно познакомиться 🤗
@@ -190,15 +226,21 @@ updater <- Updater(token = scan("/var/mytoken", what = "", quiet = TRUE)) +
     CommandHandler("menu", fun_menu) +
     MessageHandler(fun_menu, 
         filters = MessageFilters$flt_menu) +
+    # Stats С&M handlers
+    CommandHandler("stats", fun_stat) +
+    MessageHandler(fun_stat, filters = MessageFilters$flt_stat) +
     # Support С&M handlers
-    CommandHandler("support", fun_supp) +
+    CommandHandler("stats", fun_supp) +
     MessageHandler(fun_supp, filters = MessageFilters$flt_supp) +
+    # Registration
     CommandHandler("register", fun_regi) + 
     MessageHandler(fun_regi, filters = MessageFilters$flt_regi) +
+    # All other hundlers
     CallbackQueryHandler(answer_cb) + 
     MessageHandler(fun_echo, filters = MessageFilters$text)
 
 updater$start_polling()
-bot$clean_updates()
-update <- bot$get_updates()
-update <- update[[1]]
+# Отладка -----------------------------------------------------------------
+# bot$clean_updates()
+# update <- bot$get_updates()
+# update <- update[[1]]
