@@ -139,7 +139,7 @@ MessageFilters$flt_regi <- BaseFilter(function(message) {
 
 fun_regi <- function(bot, update){ 
     tlg_usr_id <- update$message$from$id
-    all_ids <- DBI::dbGetQuery(con, "SELECT DISTINCT tlg_user_id FROM users;") 
+    all_ids <- DBI::dbGetQuery(con, "SELECT tlg_user_id FROM users;")$tlg_user_id 
     # bot$sendMessage(chat_id = update$message$chat_id, 
     #                 text = paste0("your id is ", tlg_usr_id))
     if(tlg_usr_id %in% all_ids){
