@@ -102,12 +102,12 @@ server <- function(input, output, session) {
             shinyalert::shinyalert(title = "Ошибка", text = "Пароль слишком короткий", type = "error")
         } else {
         md5pass = cli::hash_md5(toupper(input$pass))
-        df <<- DBI::dbGetQuery(con, paste0("SELECT * FROM users WHERE hash = '", 
+        current_user <<- DBI::dbGetQuery(con, paste0("SELECT * FROM users WHERE hash = '", 
                                           md5pass, 
                                           "';"))
-        if(nrow(df) != 1){
+        if(nrow(current_user) != 1){
             shinyalert::shinyalert(title = "Ошибка", text = "Пароль неверный", type = "error")
-        } else if(difftime(Sys.time(), df$hash_date, units = "mins") > 10){
+        } else if(difftime(Sys.time(), current_user$hash_date, units = "mins") > 10){
             shinyalert::shinyalert(title = "Пароль устарел", 
                 text = "Сгенерируйте пароль заново в телеграм-боте", type = "warning")
         } else {
@@ -119,7 +119,7 @@ server <- function(input, output, session) {
             shinyalert::shinyalert(title = "Вход в систему", 
                 text = paste0("Вы успешно залогинились! ",
                     "\nРад приветствовать вас, ",
-                    df$name[[1]], 
+                    current_user$name[[1]], 
                     "! \n \nВозможность записи: ", 
                     status),
                 type = "success")
@@ -134,12 +134,45 @@ server <- function(input, output, session) {
         shinyalert::shinyalert(title = "Выход из системы", 
             text = paste0("Вы успешно вышли из своей учетной записи!", 
                           "\nДо новых встреч, ", 
-                          df$name[[1]],
+                          current_user$name[[1]],
                           "! \n \nВозможность записи: ", 
                           status),
             type = "info")
     })
 
+    
+    # How to react on `record` button
+    observeEvent(input$record, {
+        if(status == "no") { 
+            shinyalert::shinyalert(title = "Вы не авторизованы!", 
+                                   text = "Войдите в систему чтобы вносить новые записи", type = "error")
+        } else if(nchar(input$i_name1) == 0 | nchar(input$i_name2) == 0){
+            shinyalert::shinyalert(title = "Некорректные данные", 
+                                   text = "Имена не могут быть пустыми", type = "warning")
+        } else if(nchar(input$i_name1) < 3 | nchar(input$i_name2) < 3){
+            shinyalert::shinyalert(title = "Некорректные данные", 
+                                   text = "Имена не могут быть слишком короткими", type = "warning")
+        } else {
+            i_last <- data.frame(name1 = input$i_name1, name2 = input$i_name2, 
+                                 dat = str_replace_all(as.character(input$i_dat), "-", "/"), 
+                                 # proof = input$i_proof) 
+                                 proof = dplyr::case_when(
+                                     input$i_proof == "" ~ current_user$name[[1]], 
+                                     TRUE ~ input$i_proof))
+            i_succ <- DBI::dbWriteTable(con, "my_table", i_last, 
+                                        append = TRUE, row.names = FALSE)
+            if(i_succ){
+                showNotification("Записано благополучно!", type = "message")
+            } else {
+                showNotification("Что-то не благополучно...", type = "error")
+            }
+            updateTextInput(session, inputId = "i_name1", value = "")
+            updateTextInput(session, inputId = "i_name2", value = "")
+            updateDateInput(session, inputId = "i_dat", value = NULL)
+            updateTextInput(session, inputId = "i_proof", value = "")
+        }
+    })
+    
     output$names_selector <- renderUI({
         selectInput("usr", "Чаёвник", choices = users) 
     })
@@ -175,38 +208,7 @@ server <- function(input, output, session) {
         updateNumericInput(session, inputId = "rowstoshow", 
                            max = nrow(df()), value = nrow(df()))
     })
-        
-    # How to react on `record` button
-    observeEvent(input$record, {
-        if(status == "no") { 
-            shinyalert::shinyalert(title = "Вы не авторизованы!", 
-                text = "Войдите в систему чтобы вносить новые записи", type = "error")
-        } else if(nchar(input$i_name1) == 0 | nchar(input$i_name2) == 0){
-            shinyalert::shinyalert(title = "Некорректные данные", 
-                text = "Имена не могут быть пустыми", type = "warning")
-        } else if(nchar(input$i_name1) < 3 | nchar(input$i_name2) < 3){
-            shinyalert::shinyalert(title = "Некорректные данные", 
-                text = "Имена не могут быть слишком короткими", type = "warning")
-        } else {
-        i_last <- data.frame(name1 = input$i_name1, name2 = input$i_name2, 
-                   dat = str_replace_all(as.character(input$i_dat), "-", "/"), 
-                   # proof = input$i_proof) 
-                   proof = dplyr::case_when(
-                       input$i_proof == "" ~ df$name[[1]], 
-                       TRUE ~ input$i_proof))
-        i_succ <- DBI::dbWriteTable(con, "my_table", i_last, 
-                              append = TRUE, row.names = FALSE)
-        if(i_succ){
-            showNotification("Записано благополучно!", type = "message")
-        } else {
-            showNotification("Что-то не благополучно...", type = "error")
-        }
-        updateTextInput(session, inputId = "i_name1", value = "")
-        updateTextInput(session, inputId = "i_name2", value = "")
-        updateDateInput(session, inputId = "i_dat", value = NULL)
-        updateTextInput(session, inputId = "i_proof", value = "")
-        }
-    })
+
 
 }
 # Run the application 
