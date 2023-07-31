@@ -39,8 +39,10 @@ fun_start <- function(bot, update){
     bot$sendMessage(chat_id = update$message$chat_id,
                     text = paste0('Здравствуйте, ', 
                                   update$message$from$first_name, '
-Я - телеграм-бот проекта <a href="https://ru.wikipedia.org/wiki/Рикроллинг">Faunistica 2.0</a>. 
-Очень рад, что Вы заинтересовались <i><b>нашим проектом</b></i>. 
+Я - телеграм-бот проекта <a 
+href="https://ru.wikipedia.org/wiki/Рикроллинг">Faunistica 2.0</a>, очень рад, что Вы  им заинтересовались. 
+С удовольствием зарегистрирую вас как нового участника и дам пароль для входа на <a
+href = "194.35.119.132:3838/tea">наш сайт</a>.
 Чем могу вам помочь?'),
                     parse_mode = 'HTML',
                     disable_web_page_preview = TRUE)
@@ -127,7 +129,7 @@ fun_stat <- function(bot, update){
     bot$sendMessage(chat_id = update$message$chat_id, 
                     reply_markup = ReplyKeyboardRemove(),
                     text = paste0("Статистики тоже пока ещё нет... ",
-                        "\nНо вы можете помочь рас этим разработчику. ", 
+                        "\nНо вы можете помочь разработчику с этим. ", 
                         "\nРаз у вас есть доступ к боту, то и контакты разработчика тоже есть))0)")
     )
 }
