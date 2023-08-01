@@ -121,7 +121,7 @@ server <- function(input, output, session) {
             ){
             shinyalert::shinyalert(
                 title = "Некорректные данные", 
-                text = "Имён с цифрами не бывает", 
+                text = "имён с цифрами не бывает", 
                 type = "warning")
         } else if(
             str_detect(toupper(input$i_name1), stringr::regex("(.)\\1{2,}")) | 
