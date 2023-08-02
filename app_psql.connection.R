@@ -2,29 +2,35 @@
 library(shiny)
 library(shinyalert)
 library(RPostgreSQL)
+library(RSQLite)
 library(tidyverse)
 
-# test dataframe
-# data.frame(name1 = c("Petir", "Mike", "Norman", "Borman", "Xi", "Xi"),
-#            name2 = c("Anna", "Anna", "Borman", "Norman", "Petir", "Anna"),
-#            dat = as.Date(c("02/12/22", "12/02/23", "01/10/21",
-#                            "01/01/00", "26/07/89", "26/07/23"),
-#                          format = "%d/%m/%y"),
-#            proof = c("Jon", "John", "Johan", "Joe", "Ju", "Go"))
+my_table <- data.frame(name1 = c("Petir", "Mike", "Norman", "Borman", "Xi", "Xi"),
+           name2 = c("Anna", "Anna", "Borman", "Norman", "Petir", "Anna"),
+           dat = as.Date(c("02/12/22", "12/02/23", "01/10/21",
+                           "01/01/00", "26/07/89", "26/07/23"),
+                         format = "%d/%m/%y"),
+           proof = c("Jon", "John", "Johan", "Joe", "Ju", "Go"))
+users <-  data.frame(tlg_user_id = 99999999,
+                    name = "windows.user",
+                    hash = cli::hash_md5("pass"), 
+                    hash_date = Sys.time())
 
-# connection 
-con_config <- list(database = "rdatabase",
-                   hostname = "localhost",
-                   dsn_port = "5432",
-                   dsn_uid  = "ruser",
-                   mypass   = scan("/var/mypass",
-                                   what = "", nlines = 1, quiet = TRUE))
-con <- dbConnect(dbDriver("PostgreSQL"),
-                 dbname = con_config$database,
-                 host = con_config$hostname,
-                 port = con_config$dsn_port,
-                 user = con_config$dsn_uid,
-                 password = con_config$mypass)
+# dbWriteTable(con, "users", users, overwrite = TRUE)
+# dbWriteTable(con, "my_table", my_table, overwrite = TRUE)
+con <- if(!str_detect(sessionInfo()$platform, "linux")){
+    dbConnect(RSQLite::SQLite(), "win_db.sqlite")
+} else {
+    dbConnect(dbDriver("PostgreSQL"),
+                 dbname = "rdatabase",
+                 host = "localhost",
+                 port = "5432",
+                 user = "ruser",
+                 password = scan("/var/mypass", what = ""))
+}
+
+dbGetQuery(con, "SELECT * FROM my_table")
+dbGetQuery(con, "SELECT * FROM users")
 
 # Server ------------------------------------------------------------------
 server <- function(input, output, session) {
@@ -52,7 +58,7 @@ server <- function(input, output, session) {
             shinyalert::shinyalert(title = "Ошибка", text = "Пароль слишком короткий", type = "error")
         } else {
             md5pass = cli::hash_md5(toupper(input$pass))
-            current_user <<- DBI::dbGetQuery(con, paste0("SELECT * FROM users WHERE hash = '", 
+            current_user <- DBI::dbGetQuery(con, paste0("SELECT * FROM users WHERE hash = '", 
                                                          md5pass, 
                                                          "';"))
             if(nrow(current_user) != 1){
