@@ -211,27 +211,37 @@ server <- function(input, output, session) {
 ui <- fluidPage(
     shinyjs::useShinyjs(),
     tags$style(type="text/css", "body {padding-top: 70px;}"),
+    # tags$style(HTML("")),
     tags$head(tags$link(rel="shortcut icon", 
                         href="icons8-favicon-96.png")),
-    navbarPage(title = "Faunistica 2.0",
+    navbarPage(
+        title = tags$div(style="position: relative; margin-right: 90px", 
+                 tags$img(src="logo_placeholder.svg", height = "70px"),
+                 tags$p(style="position: relative; top: -70px; left: 90px; ", 
+                         "Faunistica 2.0")
+        ),
+        windowTitle = "Faunistica 2.0",
         position = "fixed-top",
-        
-        # icon = "icons8-favicon-96.png",
         tabPanel("Главная", 
-                 HTML("Здесь будет самое главное о проекте")),
+                 # tags$img(src = "logo_placeholder.svg", width = 50),
+                 # icon = icon("bar-chart-o"),
+                 HTML("<br>Здесь будет самое главное о проекте")),
         navbarMenu("О проекте",
                    "----",
                    "Для волонтеров",
                    tabPanel("Польза для науки",
+                            HTML("<br>"),
                             tags$img(src = "dog.jpeg", width = 500)
                             
                             ),
                    tabPanel("Польза для вас",
+                            HTML("<br>"),
                             tags$img(src = "icons8-favicon-96.png", width = 500)
                             
                    ),
                    tabPanel("Как нам помочь",
-                            h3("Мы записали для вас несколько роликов, которые помогут вам лучше понять как устроен наш проект научного волонтерства и каким именно образом вы можете ему помочь."),
+                            HTML("<br>"),
+                            h4("Мы записали для вас несколько роликов, которые помогут вам лучше понять как устроен наш проект научного волонтерства и каким именно образом вы можете ему помочь."),
                             HTML("<br>"),
                             h4("Для чего и как изучают биоразнообразие"),
                             HTML('<iframe width="560" height="315" 
@@ -256,16 +266,19 @@ ui <- fluidPage(
                    "----",
                    "Для специалистов",
                    tabPanel("Как это сделано",
+                            HTML("<br>"),
                             tags$img(src = "icons8-favicon-96.png", width = 500)
                             # uiOutput("names_selector")
                    ),
                    tabPanel("Сотрудничество",
+                            HTML("<br>"),
                             tags$img(src = "dog.jpeg", width = 500)
                             # tableOutput("res_table")
                             )
         ),
         tabPanel("Статистика",
-            h3("Здесь пока только статистика по чаепитиям, но скоро будет реальная наука!"),
+            h3("Здесь пока только статистика по чаепитиям,", align = "center"), 
+            h3("но скоро будет реальная наука!", align = "center"), 
             tabsetPanel(
                 tabPanel("Чаепития",
                 sidebarLayout(
@@ -287,6 +300,7 @@ ui <- fluidPage(
                 tabPanel("Наука")
         )),
         tabPanel("Учатсвовать", 
+            HTML("<br>"),
             sidebarLayout(
             sidebarPanel(
                 HTML(paste0("<h3>Авторизация</h3>", 
@@ -321,7 +335,8 @@ ui <- fluidPage(
 )
 
 # Run the application 
-shinyApp(ui = ui, server = server, 
+shinyApp(ui = ui, server = server,  
+    options = list(launch.browser = FALSE),
     onStart = function() {
         onStop(function() {
             rm(list = ls())
