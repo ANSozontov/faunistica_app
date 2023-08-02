@@ -195,11 +195,15 @@ server <- function(input, output, session) {
 # UI ----------------------------------------------------------------------
 ui <- fluidPage(
     shinyjs::useShinyjs(),
-    titlePanel("Служба автоматизированного учёта чаепитий"),
-        tabsetPanel(
-            tabPanel("Статистика чаепитий",
+    tags$style(type="text/css", "body {padding-top: 70px;}"),
+    tags$head(tags$link(rel="shortcut icon", 
+                        href="icons8-favicon-96.png")),
+    navbarPage(title = "Служба учёта чаепитий",
+        position = "fixed-top",
+        # icon = "icons8-favicon-96.png",
+        tabPanel("Поиск состоявшихся",
             sidebarLayout(
-                sidebarPanel(
+            sidebarPanel(
                 uiOutput("names_selector"),
                 HTML("<br>"),
                 numericInput("rowstoshow", "Строчек для показа: ", 
@@ -215,8 +219,8 @@ ui <- fluidPage(
                 HTML("<br>")
             )
             )
-            ),
-            tabPanel("Ввод новых чаепитий", 
+        ),
+        tabPanel("Ввод новых", 
             sidebarLayout(
             sidebarPanel(
                 HTML(paste0("<h3>Авторизация</h3>", 
@@ -243,7 +247,15 @@ ui <- fluidPage(
                 tags$img(src = "dog.jpeg", width = 500)
             )
             )
-            )
+        )
+        # tabPanelBackground = "blue",
+        
+        # navbarMenu("More",
+        #            tabPanel("Summary"),
+        #            "----",
+        #            "Section header",
+        #            tabPanel("Table")
+        # )
         )
 )
 
