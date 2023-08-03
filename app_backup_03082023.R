@@ -47,7 +47,6 @@ server <- function(input, output, session) {
         # initial variables (for current session)
     shinyjs::disable("deauth")
     status <- reactiveVal("no")
-    current_language <- reactiveVal("RU")
     current_user <- reactiveVal(NULL)
     users <- reactiveVal({
         DBI::dbGetQuery(con,"SELECT * FROM my_table") %>% 
@@ -59,16 +58,6 @@ server <- function(input, output, session) {
     
     output$names_selector <- renderUI({
         selectInput("usr", "Чаёвник", choices = users()) 
-    })
-    # languange 
-    observeEvent(input$change_language, {
-        if(current_language() == "RU") {
-            updateActionButton(session, "change_language", label = "EN")
-            current_language("EN")
-        } else { 
-            updateActionButton(session, "change_language", label = "RU")
-            current_language("RU")
-        }
     })
     
 # Log in ------------------------------------------------------------------
@@ -225,10 +214,6 @@ ui <- fluidPage(
     # tags$style(HTML("")),
     tags$head(tags$link(rel="shortcut icon", 
                         href="icons8-favicon-96.png")),
-    actionButton("change_language", "RU", 
-                 # label = current_language(),
-                 icon = icon("globe"),
-                 style = "position: absolute; top: 8px; right: 5px; z-index:10000;"),
     navbarPage(
         title = tags$div(style="position: relative; margin-right: 90px", 
                  tags$img(src="logo_placeholder.svg", height = "70px"),
