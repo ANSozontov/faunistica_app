@@ -44,10 +44,16 @@ server <- function(input, output, session) {
     current_language <- reactiveVal("ru")
     
     r <- function(X){ # translates text into current language
-        sapply(X,function(s) L[[s]][[current_language()]], USE.NAMES=FALSE)
+        txt <- sapply(X,function(s) L[[s]][[current_language()]], USE.NAMES=FALSE)
+        # parse some code to html 
+        if(substr(txt, 1, 4) == "ulli"){ 
+            txt <- txt %>%  
+                stringr::str_replace_all("ulli_", "") %>% 
+                stringr::str_replace_all("; ", "</li><li>") %>% 
+                paste0("<ul><li>", ., "</li></ul>")
+        }
+        txt
     }
-    
-    output$test <- renderText(r("test_curretnt_language"))
     
     current_user <- reactiveVal(NULL)
     users <- reactiveVal({
@@ -227,19 +233,17 @@ server <- function(input, output, session) {
 
 # PAGE home ----------------------------------------------------------------
     output$p_home <- renderUI(tagList(
-        textOutput("test"),
-        h2("О проекте в пяти предложениях:"), 
+        actionButton("change_language", "RU", 
+                     icon = icon("globe"),
+                     style = "position: absolute; top: 8px; right: 5px; z-index:10000;"),
+        # h2("О проекте в пяти предложениях:"), 
+        h2(r("home_brief")),
         HTML(paste0("<p>Описание проекта для внешней аудитории. <br>", 
                     "4-5 предложений, где будет обоснование важности проекта с научной и социальной точки зрения. <br>", 
-                    "Для каких задач нужны волонтеры и как они могут участвовать? <br> </p> <ul>")), 
-        HTML("<li>1. Научных публикаций тысячи и это число прирастает лавинообразно. </li>"),
-        HTML("<li>2. Поиск первичной информации в ручном режиме стал тормозить ученых((( </li>"),
-        HTML("<li>3. Результаты проекта повысят скорость и эффективность исследований окружающей среды. </li>"),
-        HTML("<li>4. Волонтеры будут оцифровывать научные статьи и структурировать информацию из них на онлайн-платформе. </li>"),
-        HTML("<li>5. Волонтеры смогут внести свой вклад в научный прогресс, получить доступ к эксклюзивным материалам и мероприятиям, а также (возможно) побороть свою арахнофобию.
-                      </li></ul> <br>"),
-        h2("А теперь подробности"),
-        h3("Цель научного исследования"),
+                    "Для каких задач нужны волонтеры и как они могут участвовать? <br> </p>")), 
+        HTML(r("home_summary")),
+        h2(r("home_details")),
+        h3(r("home_aim")),
         HTML(" <br> <ul><li>1. Поиск сведений о находках живых организмов - обязательный этап каждого исследования окружающей среды. </li>"),
         HTML("<li>2. Традиционное решение этой задачи - тотальный просмотр всех научных публикаций - простое, но отнимает чрезвычайно много времени, сил и других ресурсов. </li>"),
         HTML("<li>3. Необходим переход к использованию средств быстрого и эффективного поиск этих данных, без необходимости смотреть каждую статью вручную. </li>"),
@@ -261,18 +265,18 @@ server <- function(input, output, session) {
 
 # PAGE team ---------------------------------------------------------------
     output$p_team <- renderUI(tagList(
-        h3("Команда", align = "center"),
+        h3(r("team_team"), align = "center"), 
         fluidRow(
-            column(width = 2, tags$img(src = "sozontov.jpg", width = "100%", `data-action`="zoom"), 
-            ), 
-            column(width = 10, h4("Созонтов Артём"), HTML("34 года, к.б.н., <br>
-Институт экологии растений и животных УрО РАН<br>
-Уральский федеральный университет<br>
-<br> 
-<b>Руководитель</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли"))),
-fluidRow(HTML("<br>")),
-fluidRow(
+            column(width = 2, tags$img(src = "sozontov.jpg", width = "100%", `data-action`="zoom")), 
+            column(width = 10, 
+                h4(r("team_sozontov1")), 
+                HTML(r("team_sozontov2")), 
+                HTML(paste0("<br><b>", r("team_sozontov3"), "</b><br>")),
+                HTML(r("team_sozontov4"))
+            )
+        ),
+        fluidRow(HTML("<br>")),
+        fluidRow(
     column(width = 2, HTML('<img src="ivanova.jpg" data-action="zoom" width="100%">')
            # tags$img(src = "ivanova.jpg", width = "100%", `data-action`="zoom"), 
     ), 
@@ -442,8 +446,50 @@ fluidRow(
     ))
 
 # PAGE input new data ------------------------------------------------------
+    output$i_auth <- renderUI(tagList(
+        h3(r("i_auth.title"), align = "center"),
+        HTML(paste0(
+            "<p>",
+            r("i_auth.text"), 
+            ' <a href = "https://t.me/faunistica_2_bot" target="_blank">', 
+            r("i_link.text"), 
+            ".</a></p>")),
+        fluidRow(
+            column(width = 3, passwordInput("pass_1", label = NULL, placeholder = r("i_passwd.fill")))), # remove _1 !!!
+        fluidRow(
+            column(width = 2.5, actionButton("auth_1", r("i_auth.in"), width = '100%')), # remove _1 !!!
+            column(width = 2.5, actionButton("deauth_1", r("i_auth.out"), width = '100%')) # remove _1 !!!
+        )
+     ))
+    
+    output$i_adm <- renderUI(tagList(
+        hr(),
+        h3(r("i_adm.title"), align = "center"), # , align = "center"
+        br(),
+        fluidRow(
+            column(width = 3, textInput("country",   r("i_adm0"))),
+            column(width = 3, textInput("region",    r("i_adm1"))),
+            column(width = 3, textInput("district",  r("i_adm2"))), 
+            column(width = 3, textInput("loc", r("i_loc"), placeholder = r("i_loc.fill")))
+        ),
+        fluidRow(
+            column(width = 2, actionButton("hold_adm",   r("srv_hold"))), 
+            column(width = 2, actionButton("unhold_adm", r("srv_unhold")))
+        ), 
+        br()
+    ))
+    
     output$p_input.data <- renderUI(tagList(
-        HTML("<br>"),
+        br(),
+        uiOutput("i_auth"),
+        br(),
+        # uiOutput("i_publ"),
+        # br(),
+        uiOutput("i_adm"),
+        # uiOutput("i_geo"),
+        # uiOutput("i_event"),
+        # uiOutput("i_taxa"),
+        # uiOutput("i_abu"),
         sidebarLayout(
             sidebarPanel(
                 HTML(paste0("<h3>Авторизация</h3>", 
@@ -475,19 +521,6 @@ fluidRow(
     
 
 # NAVBAR ------------------------------------------------------------------
-    output$home <- renderText(r("nv_home"))
-    output$participate <- renderText(r("nv_participate"))
-    output$statistics <- renderText(r("nv_statistics"))
-    output$about <- renderText(r("nv_about"))
-    output$team <- renderText(r("nv_team")) ####
-    output$profit_science <- renderText(r("nv_profit_science"))
-    output$profit_personal <- renderText(r("nv_profit_personal"))
-    output$howtohelp <- renderText(r("nv_howtohelp"))
-    output$voluntary_project <- renderText(r("nv_voluntary_project"))
-    output$cooperation <- renderText(r("nv_cooperation"))
-    output$web_app <- renderText(r("nv_web_app"))
-    output$scientific_project <- renderText(r("nv_scientific_project"))
-    
     output$NAVBAR <- renderUI(tagList(
         navbarPage(
         title = tags$div(style="position: relative; margin-right: 90px", 
@@ -497,26 +530,26 @@ fluidRow(
         ),
         windowTitle = "Faunistica 2.0",
         position = "fixed-top",
-        tabPanel(title = textOutput("home"), uiOutput("p_home")),
-        navbarMenu(textOutput("about"), 
-                   tabPanel(textOutput("team"), uiOutput("p_team")), 
+        tabPanel(title = r("nv_home"), uiOutput("p_home")), 
+        navbarMenu(r("nv_about"), 
+                   tabPanel(r("nv_team"), uiOutput("p_team")),
                    "----",
                    r("nv_for_volunteers"),
-                   tabPanel(textOutput("profit_science"), uiOutput("p_sci.profit")), 
-                   tabPanel(textOutput("profit_personal"),   uiOutput("p_your.profit")), 
-                   tabPanel(textOutput("howtohelp"),   uiOutput("p_howtohelp")), 
-                   tabPanel(textOutput("voluntary_project"), uiOutput("p_our.project")), 
+                   tabPanel(r("nv_profit_science"), uiOutput("p_sci.profit")), 
+                   tabPanel(r("nv_profit_personal"),   uiOutput("p_your.profit")), 
+                   tabPanel(r("nv_howtohelp"),   uiOutput("p_howtohelp")), 
+                   tabPanel(r("nv_voluntary_project"), uiOutput("p_our.project")), 
                    "----",
                    r("nv_for_scientists"),
-                   tabPanel(textOutput("cooperation"), uiOutput("p_cooperation")),
-                   tabPanel(textOutput("web_app"), uiOutput("p_web.app")), 
-                   tabPanel(textOutput("scientific_project"), h4("to be filled soon...")),
+                   tabPanel(r("nv_cooperation"), uiOutput("p_cooperation")), 
+                   tabPanel(r("nv_web_app"), uiOutput("p_web.app")), 
+                   tabPanel(r("nv_scientific_project"), h4("to be filled soon...")),
                    "----"
         ),
-        tabPanel(textOutput("statistics"), uiOutput("p_statistics") 
+        tabPanel(r("nv_statistics"), uiOutput("p_statistics") 
                  
         ),
-        tabPanel(textOutput("participate"), uiOutput("p_input.data")) 
+        tabPanel(r("nv_participate"), uiOutput("p_input.data")) 
         )
     ))
     
@@ -526,13 +559,8 @@ fluidRow(
 ui <- fluidPage(
     shinyjs::useShinyjs(),
     tags$style(type="text/css", "body {padding-top: 70px;}"),
-    # tags$style(HTML("")),
     tags$head(tags$link(rel="shortcut icon", 
                         href="icons8-favicon-96.png")),
-    actionButton("change_language", "RU", 
-                 # label = current_language(),
-                 icon = icon("globe"),
-                 style = "position: absolute; top: 8px; right: 5px; z-index:10000;"),
     uiOutput("NAVBAR")
 )
 
