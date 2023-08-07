@@ -65,7 +65,6 @@ server <- function(input, output, session) {
     observeEvent(input$change_language, {
         if(current_language() == "ru") {
             updateActionButton(session, "change_language", label = "EN")
-            showNotification("English language selected", type = "message")
             current_language("en")
         # } else if(current_language() == "en") { 
         #     updateActionButton(session, "change_language", label = "KZ")
@@ -75,7 +74,6 @@ server <- function(input, output, session) {
         #     current_language("ua")
         } else{
             updateActionButton(session, "change_language", label = "RU")
-            showNotification("Выбран русский язык", type = "message")
             current_language("ru")
         }
     })
@@ -258,57 +256,6 @@ server <- function(input, output, session) {
     ))
     
 
-
-# PAGE team ---------------------------------------------------------------
-    output$p_team <- renderUI(tagList(
-        h3("Команда", align = "center"),
-        fluidRow(
-            column(width = 2, tags$img(src = "sozontov.jpg", width = "100%", `data-action`="zoom"), 
-            ), 
-            column(width = 10, h4("Созонтов Артём"), HTML("34 года, к.б.н., <br>
-Институт экологии растений и животных УрО РАН<br>
-Уральский федеральный университет<br>
-<br> 
-<b>Руководитель</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли"))),
-fluidRow(HTML("<br>")),
-fluidRow(
-    column(width = 2, HTML('<img src="ivanova.jpg" data-action="zoom" width="100%">')
-           # tags$img(src = "ivanova.jpg", width = "100%", `data-action`="zoom"), 
-    ), 
-    column(width = 10, h4("Иванова Наталья"), HTML("33 года, к.б.н., <br>
-Институт математических проблем биологии – филиал Института прикладной математики им. М.В. Келдыша РАН<br>
-<br> 
-<b>Аудитор данных</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли"))),
-fluidRow(HTML("<br>")),
-fluidRow(
-    column(width = 2, tags$img(src = "sokolova.jpg", width = "100%"), 
-    ), 
-    column(width = 10, h4("Соколова Софья"), HTML("31 год, аспирант<br>
-Южно-Уральский Федеральный научный центр Минералогии и геоэкологии УрО РАН, <br>
-Институт экологии растений и животных УрО РАН<br>
-<br> 
-<b>Технический писатель</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли"))),
-fluidRow(
-    column(width = 2, tags$img(src = "plakhina.jpg", width = "100%"), 
-    ), 
-    column(width = 10, h4("Плакхина Евгения"), HTML("37 лет, аспирант<br>
-Пермский национальный исследовательский университет<br>
-<br> 
-<b>Библиограф</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли"))),
-fluidRow(
-    column(width = 2, tags$img(src = "ustinova.jpg", width = "100%"), 
-    ), 
-    column(width = 10, h4("Устинова Анастасия"), HTML("23 года, аспирант<br>
-Институт экологии растений и животных УрО РАН<br>
-<br> 
-<b>Коммуникатор</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли")))
-    ))
-
 # PAGE scientific profit ---------------------------------------------------
     output$p_sci.profit <- renderUI(tagList(
         HTML("<br>"),
@@ -389,7 +336,53 @@ fluidRow(
         icon("arrows-up-to-line"), HTML("<i>Вы находитесь здесь</i><br> <br>"),
         HTML("<b>Этап 3.</b> Внесение корректировок<br>"),
         HTML("<b>Этап 4.</b> Запуск проекта в полную силу<br>"),
-        HTML("<b>Этап 5.</b> Внесение корректировок<br>")
+        HTML("<b>Этап 5.</b> Внесение корректировок<br>"),
+        h3("Команда", align = "center"),
+        fluidRow(
+            column(width = 2, tags$img(src = "sozontov.jpg", width = "100%", `data-action`="zoom"), 
+            ), 
+            column(width = 10, h4("Созонтов Артём"), HTML("34 года, к.б.н., <br>
+Институт экологии растений и животных УрО РАН<br>
+Уральский федеральный университет<br>
+<br> 
+<b>Руководитель</b><br>
+Описание роли описание роли описание роли описание роли описание роли описание роли"))),
+        fluidRow(HTML("<br>")),
+        fluidRow(
+            column(width = 2, HTML('<img src="ivanova.jpg" data-action="zoom" width="100%">')
+                   # tags$img(src = "ivanova.jpg", width = "100%", `data-action`="zoom"), 
+            ), 
+            column(width = 10, h4("Иванова Наталья"), HTML("33 года, к.б.н., <br>
+Институт математических проблем биологии – филиал Института прикладной математики им. М.В. Келдыша РАН<br>
+<br> 
+<b>Аудитор данных</b><br>
+Описание роли описание роли описание роли описание роли описание роли описание роли"))),
+        fluidRow(HTML("<br>")),
+        fluidRow(
+            column(width = 2, tags$img(src = "sokolova.jpg", width = "100%"), 
+            ), 
+            column(width = 10, h4("Соколова Софья"), HTML("31 год, аспирант<br>
+Южно-Уральский Федеральный научный центр Минералогии и геоэкологии УрО РАН, <br>
+Институт экологии растений и животных УрО РАН<br>
+<br> 
+<b>Технический писатель</b><br>
+Описание роли описание роли описание роли описание роли описание роли описание роли"))),
+        fluidRow(
+            column(width = 2, tags$img(src = "plakhina.jpg", width = "100%"), 
+            ), 
+            column(width = 10, h4("Плакхина Евгения"), HTML("37 лет, аспирант<br>
+Пермский национальный исследовательский университет<br>
+<br> 
+<b>Библиограф</b><br>
+Описание роли описание роли описание роли описание роли описание роли описание роли"))),
+        fluidRow(
+            column(width = 2, tags$img(src = "ustinova.jpg", width = "100%"), 
+            ), 
+            column(width = 10, h4("Устинова Анастасия"), HTML("23 года, аспирант<br>
+Институт экологии растений и животных УрО РАН<br>
+<br> 
+<b>Коммуникатор</b><br>
+Описание роли описание роли описание роли описание роли описание роли описание роли")))
     ))
     
 
@@ -473,53 +466,6 @@ fluidRow(
     ))
 
     
-
-# NAVBAR ------------------------------------------------------------------
-    output$home <- renderText(r("nv_home"))
-    output$participate <- renderText(r("nv_participate"))
-    output$statistics <- renderText(r("nv_statistics"))
-    output$about <- renderText(r("nv_about"))
-    output$team <- renderText(r("nv_team")) ####
-    output$profit_science <- renderText(r("nv_profit_science"))
-    output$profit_personal <- renderText(r("nv_profit_personal"))
-    output$howtohelp <- renderText(r("nv_howtohelp"))
-    output$voluntary_project <- renderText(r("nv_voluntary_project"))
-    output$cooperation <- renderText(r("nv_cooperation"))
-    output$web_app <- renderText(r("nv_web_app"))
-    output$scientific_project <- renderText(r("nv_scientific_project"))
-    
-    output$NAVBAR <- renderUI(tagList(
-        navbarPage(
-        title = tags$div(style="position: relative; margin-right: 90px", 
-                         tags$img(src="logo_placeholder.svg", height = "70px"),
-                         tags$p(style="position: relative; top: -70px; left: 90px; ", 
-                                "Faunistica 2.0")
-        ),
-        windowTitle = "Faunistica 2.0",
-        position = "fixed-top",
-        tabPanel(title = textOutput("home"), uiOutput("p_home")),
-        navbarMenu(textOutput("about"), 
-                   tabPanel(textOutput("team"), uiOutput("p_team")), 
-                   "----",
-                   r("nv_for_volunteers"),
-                   tabPanel(textOutput("profit_science"), uiOutput("p_sci.profit")), 
-                   tabPanel(textOutput("profit_personal"),   uiOutput("p_your.profit")), 
-                   tabPanel(textOutput("howtohelp"),   uiOutput("p_howtohelp")), 
-                   tabPanel(textOutput("voluntary_project"), uiOutput("p_our.project")), 
-                   "----",
-                   r("nv_for_scientists"),
-                   tabPanel(textOutput("cooperation"), uiOutput("p_cooperation")),
-                   tabPanel(textOutput("web_app"), uiOutput("p_web.app")), 
-                   tabPanel(textOutput("scientific_project"), h4("to be filled soon...")),
-                   "----"
-        ),
-        tabPanel(textOutput("statistics"), uiOutput("p_statistics") 
-                 
-        ),
-        tabPanel(textOutput("participate"), uiOutput("p_input.data")) 
-        )
-    ))
-    
 }
 
 # UI ----------------------------------------------------------------------
@@ -533,7 +479,33 @@ ui <- fluidPage(
                  # label = current_language(),
                  icon = icon("globe"),
                  style = "position: absolute; top: 8px; right: 5px; z-index:10000;"),
-    uiOutput("NAVBAR")
+    navbarPage(
+        title = tags$div(style="position: relative; margin-right: 90px", 
+                 tags$img(src="logo_placeholder.svg", height = "70px"),
+                 tags$p(style="position: relative; top: -70px; left: 90px; ", 
+                         "Faunistica 2.0")
+        ),
+        windowTitle = "Faunistica 2.0",
+        position = "fixed-top",
+        tabPanel("Главная", uiOutput("p_home")),
+        navbarMenu("О проекте",
+            "----",
+            "Для волонтеров",
+            tabPanel("Польза для науки", uiOutput("p_sci.profit")),
+            tabPanel("Польза для вас",   uiOutput("p_your.profit")),
+            tabPanel("Как нам помочь",   uiOutput("p_howtohelp")),
+            tabPanel("Наш волонтерский проект", uiOutput("p_our.project")),
+            "----",
+            "Для специалистов",
+            tabPanel("Сотрудничество", uiOutput("p_cooperation")),
+            tabPanel("Наше веб-приложение", uiOutput("p_web.app")),
+            "----"
+        ),
+        tabPanel("Статистика", uiOutput("p_statistics")
+            
+        ),
+        tabPanel("Участвовать!", uiOutput("p_input.data"))
+    )
 )
 
 # Run the application 
