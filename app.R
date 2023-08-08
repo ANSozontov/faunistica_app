@@ -445,48 +445,82 @@ fluidRow(
         )
     ))
 
-# PAGE input new data ------------------------------------------------------
+# PAGE input new data: auth ----------------------------------------------------
     output$i_auth <- renderUI(tagList(
         h3(r("i_auth.title"), align = "center"),
-        HTML(paste0(
-            "<p>",
-            r("i_auth.text"), 
-            ' <a href = "https://t.me/faunistica_2_bot" target="_blank">', 
-            r("i_link.text"), 
-            ".</a></p>")),
+        br(),
         fluidRow(
-            column(width = 3, passwordInput("pass_1", label = NULL, placeholder = r("i_passwd.fill")))), # remove _1 !!!
-        fluidRow(
-            column(width = 2.5, actionButton("auth_1", r("i_auth.in"), width = '100%')), # remove _1 !!!
-            column(width = 2.5, actionButton("deauth_1", r("i_auth.out"), width = '100%')) # remove _1 !!!
+            column(width = 6,
+                HTML(paste0(
+                    "<p>",
+                    r("i_auth.text"), 
+                    ' <a href = "https://t.me/faunistica_2_bot" target="_blank">', 
+                    r("i_link.text"), 
+                    ".</a></p>"))
+                ),
+            column(width = 3, passwordInput("pass_1", label = NULL, placeholder = r("i_passwd.fill"))), # remove _1 !!!
+            column(width = 1, actionButton("auth_1", r("i_auth.in"), width = '100%')), # remove _1 !!! # , width = '100%'
+            column(width = 1, actionButton("deauth_1", r("i_auth.out"), width = '100%')) # remove _1 !!! # , width = '100%'
         )
      ))
     
+# PAGE input new data: adm ----------------------------------------------------
     output$i_adm <- renderUI(tagList(
-        hr(),
+        # hr(),
         h3(r("i_adm.title"), align = "center"), # , align = "center"
         br(),
         fluidRow(
             column(width = 3, textInput("country",   r("i_adm0"))),
             column(width = 3, textInput("region",    r("i_adm1"))),
             column(width = 3, textInput("district",  r("i_adm2"))), 
-            column(width = 3, textInput("loc", r("i_loc"), placeholder = r("i_loc.fill")))
+            column(width = 3, textInput("loc", r("i_loc"), 
+                                        placeholder = r("i_loc.fill"), 
+                                        width = "100%"))
         ),
         fluidRow(
-            column(width = 2, actionButton("hold_adm",   r("srv_hold"))), 
-            column(width = 2, actionButton("unhold_adm", r("srv_unhold")))
-        ), 
-        br()
+            column(width = 10, p(r("srv_hold"), align = 'right')),
+            column(width = 1, actionButton("hold_adm", "",  icon = icon("lock"), style="float:right")), 
+            column(width = 1, actionButton("unhold_adm", "", icon = icon("lock-open"), style="float:right"))
+        ),
     ))
-    
+
+# PAGE input new data: geo ------------------------------------------------
+    output$i_geo <- renderUI(tagList(
+        h3(r("i_geo.title"), align = "center"), # , align = "center"
+        br(),
+        fluidRow(
+            column(width = 3, textInput("place",   r("i_geo1"))), # br(), 
+            column(width = 3, textInput("region",    r("i_geo2"))),
+            column(width = 3, 
+                column(width = 8, textInput("NN",  r("i_coords")), placeholder = r("i_geo.fill")),
+                column(width = 4, br(), h4("N"))
+            ),
+            column(width = 3, 
+                column(width = 8, textInput("EE", ""), placeholder = r("i_geo.fill")), 
+                column(width = 4, br(), h4("E"))
+            )
+        ),
+        fluidRow(
+            column(width = 10, p(r("srv_hold"), align = 'right')),
+            column(width = 1, actionButton("hold_geo", "",  icon = icon("lock"), style="float:right")), 
+            column(width = 1, actionButton("unhold_geo", "", icon = icon("lock-open"), style="float:right"))
+        ),
+    ))
+
+# PAGE input new data - combine! ------------------------------------------
     output$p_input.data <- renderUI(tagList(
         br(),
         uiOutput("i_auth"),
+        hr(),
         br(),
         # uiOutput("i_publ"),
         # br(),
         uiOutput("i_adm"),
-        # uiOutput("i_geo"),
+        hr(),
+        br(),
+        uiOutput("i_geo"),
+        hr(),
+        br(),
         # uiOutput("i_event"),
         # uiOutput("i_taxa"),
         # uiOutput("i_abu"),
