@@ -474,13 +474,12 @@ fluidRow(
             column(width = 3, textInput("region",    r("i_adm1"))),
             column(width = 3, textInput("district",  r("i_adm2"))), 
             column(width = 3, textInput("loc", r("i_loc"), 
-                                        placeholder = r("i_loc.fill"), 
-                                        width = "100%"))
+                                        placeholder = r("i_loc.fill"))) # width = "100%"
         ),
         fluidRow(
             column(width = 10, p(r("srv_hold"), align = 'right')),
             column(width = 1, actionButton("hold_adm", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, actionButton("unhold_adm", "", icon = icon("lock-open"), style="float:right"))
+            column(width = 1, actionButton("unhold_adm", "", icon = icon("lock-open"), style="float:left"))
         ),
     ))
 
@@ -503,10 +502,49 @@ fluidRow(
         fluidRow(
             column(width = 10, p(r("srv_hold"), align = 'right')),
             column(width = 1, actionButton("hold_geo", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, actionButton("unhold_geo", "", icon = icon("lock-open"), style="float:right"))
-        ),
+            column(width = 1, actionButton("unhold_geo", "", icon = icon("lock-open"), style="float:left"))
+        )
     ))
 
+# PAGE input new data: event ----------------------------------------------
+    output$i_event <- renderUI(tagList(
+        h3(r("i_ev.title"), align = "center"), # , align = "center"
+        br(),
+        fluidRow(
+            column(width = 3, textInput("habitat", r("i_ev.hab"))),
+            column(width = 3, dateInput("dat", r("i_ev.date"), startview = "month")),
+            column(width = 3, textInput(
+                "Effort", 
+                r("i_ev.effort"), 
+                placeholder = r("i_ev.effort_fill"))),
+            column(width = 3, textInput("event_rem", r("i_ev.rem")))
+        ),
+        fluidRow(
+            column(width = 10, p(r("srv_hold"), align = 'right')),
+            column(width = 1, actionButton("hold_ev", "",  icon = icon("lock"), style="float:right")), 
+            column(width = 1, actionButton("unhold_ev", "", icon = icon("lock-open"), style="float:left"))
+        )
+    ))
+
+# PAGE input new data: taxa -----------------------------------------------
+    output$i_taxa <- renderUI(tagList(
+        h3(r("i_taxa.title"), align = "center", textcolor = "red"), 
+        br(),
+        fluidRow(
+            column(width = 3, textInput("Fam", r("i_taxa.fam"))),
+            column(width = 3, textInput("Gen", r("i_taxa.gen"))),
+            column(width = 3, textInput("Sp",  r("i_taxa.sp"))),
+            column(width = 3, checkboxInput("taxa_nsp", "sp.n.")),
+        ),
+        HTML("<br>"),
+        fluidRow(
+            column(width = 10, p(r("srv_hold"), align = 'right')),
+            column(width = 1, actionButton("hold_taxa", "",  icon = icon("lock"), style="float:right")), 
+            column(width = 1, actionButton("unhold_taxa", "", icon = icon("lock-open"), style="float:left"))
+        )
+    ))
+
+    
 # PAGE input new data - combine! ------------------------------------------
     output$p_input.data <- renderUI(tagList(
         br(),
@@ -521,8 +559,12 @@ fluidRow(
         uiOutput("i_geo"),
         hr(),
         br(),
-        # uiOutput("i_event"),
-        # uiOutput("i_taxa"),
+        uiOutput("i_event"),
+        hr(),
+        br(),
+        uiOutput("i_taxa"),
+        hr(),
+        br(),
         # uiOutput("i_abu"),
         sidebarLayout(
             sidebarPanel(
