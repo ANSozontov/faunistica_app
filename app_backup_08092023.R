@@ -39,7 +39,7 @@ L <- readxl::read_xlsx("translation.xlsx") %>%
 # Server ------------------------------------------------------------------
 server <- function(input, output, session) {
 # Server logic ------------------------------------------------------------
-    # language 
+        
     r <- function(X){ # translates text into current language
         txt <- sapply(X,function(s) L[[s]][[current_language()]], USE.NAMES=FALSE)
         # parse some code to html 
@@ -52,28 +52,8 @@ server <- function(input, output, session) {
         txt
     }
     
-    current_language <- reactiveVal("ru")
-    
-    observeEvent(input$change_language, {
-        if(current_language() == "ru") {
-            updateActionButton(session, "change_language", label = "EN")
-            showNotification("English language selected", type = "message")
-            current_language("en")
-            # } else if(current_language() == "en") { 
-            #     updateActionButton(session, "change_language", label = "KZ")
-            #     current_language("kz")
-            # } else if(current_language() == "kz") { 
-            #     updateActionButton(session, "change_language", label = "UA")
-            #     current_language("ua")
-        } else{
-            updateActionButton(session, "change_language", label = "RU")
-            showNotification("Выбран русский язык", type = "message")
-            current_language("ru")
-        }
-    })
-    
     # initial variables (for current session)
-    status <- reactiveVal("no")
+    current_language <- reactiveVal("ru")
     
     popup.info <- reactive({
         tippy(HTML('<p style="font-size:24px;text-align:right">🛈</p>'), 
@@ -83,7 +63,8 @@ server <- function(input, output, session) {
     })
     
     shinyjs::disable("deauth")
-    
+    status <- reactiveVal("no")
+
     current_user <- reactiveVal(NULL)
     users <- reactiveVal({
         DBI::dbGetQuery(con,"SELECT * FROM my_table") %>% 
@@ -96,7 +77,24 @@ server <- function(input, output, session) {
     output$names_selector <- renderUI({
         selectInput("usr", "Чаёвник", choices = users()) 
     })
-    
+    # language 
+    observeEvent(input$change_language, {
+        if(current_language() == "ru") {
+            updateActionButton(session, "change_language", label = "EN")
+            showNotification("English language selected", type = "message")
+            current_language("en")
+        # } else if(current_language() == "en") { 
+        #     updateActionButton(session, "change_language", label = "KZ")
+        #     current_language("kz")
+        # } else if(current_language() == "kz") { 
+        #     updateActionButton(session, "change_language", label = "UA")
+        #     current_language("ua")
+        } else{
+            updateActionButton(session, "change_language", label = "RU")
+            showNotification("Выбран русский язык", type = "message")
+            current_language("ru")
+        }
+    })
     
 # Log in ------------------------------------------------------------------
     observeEvent(input$auth, {
@@ -118,6 +116,7 @@ server <- function(input, output, session) {
                 shinyjs::enable("deauth")
                 shinyjs::disable("pass")
                 status("yes")
+                output$currentstatus <- renderText(status())
                 shinyalert::shinyalert(title = "Вход в систему", 
                                        text = paste0("Вы успешно залогинились! ",
                                                      "\nРад приветствовать вас, ",
@@ -146,64 +145,64 @@ server <- function(input, output, session) {
     })
 
 # Record ------------------------------------------------------------------
-    # observeEvent(input$record, {
-    #     if(status() == "no") { 
-    #         shinyalert::shinyalert(
-    #             title = "Вы не авторизованы!", 
-    #             text = "Войдите в систему чтобы вносить новые записи", 
-    #             type = "error")
-    #     } else if(nchar(input$i_name1) == 0 | nchar(input$i_name2) == 0){
-    #         shinyalert::shinyalert(
-    #             title = "Некорректные данные", 
-    #             text = "Имена не могут быть пустыми", 
-    #             type = "warning")
-    #     } else if(nchar(input$i_name1) > 15 | nchar(input$i_name2) > 15){
-    #         shinyalert::shinyalert(
-    #             title = "Некорректные данные", 
-    #             text = "Таких длинных имён не бывает", 
-    #             type = "warning")
-    #     } else if(nchar(input$i_name1) < 3 | nchar(input$i_name2) < 3){
-    #         shinyalert::shinyalert(
-    #             title = "Некорректные данные", 
-    #             text = "Имена не могут быть слишком короткими", 
-    #             type = "warning")
-    #     } else if(
-    #         str_detect(input$i_name1, "[:digit:]") | 
-    #         str_detect(input$i_name2, "[:digit:]")
-    #         ){
-    #         shinyalert::shinyalert(
-    #             title = "Некорректные данные", 
-    #             text = "Имён с цифрами не бывает", 
-    #             type = "warning")
-    #     } else if(
-    #         str_detect(toupper(input$i_name1), stringr::regex("(.)\\1{2,}")) | 
-    #         str_detect(toupper(input$i_name2), stringr::regex("(.)\\1{2,}"))
-    #         ){
-    #         shinyalert::shinyalert(
-    #             title = "Некорректные данные", 
-    #             text = "Пожалуйста, вводите существующие имена", 
-    #             type = "warning")
-    #     } else {
-    #         i_last <- data.frame(
-    #             name1 = input$i_name1, 
-    #             name2 = input$i_name2, 
-    #             dat = str_replace_all(as.character(input$i_dat), "-", "/"), 
-    #             proof = dplyr::case_when(
-    #                 input$i_proof == "" ~ current_user()$name[[1]], 
-    #                 TRUE ~ input$i_proof))
-    #         i_succ <- DBI::dbWriteTable(con, "my_table", i_last, 
-    #                                     append = TRUE, row.names = FALSE)
-    #         if(i_succ){
-    #             showNotification("Записано благополучно!", type = "message")
-    #         } else {
-    #             showNotification("Что-то не благополучно...", type = "error")
-    #         }
-    #         updateTextInput(session, inputId = "i_name1", value = "")
-    #         updateTextInput(session, inputId = "i_name2", value = "")
-    #         updateDateInput(session, inputId = "i_dat", value = NULL)
-    #         updateTextInput(session, inputId = "i_proof", value = "")
-    #     }
-    # })
+    observeEvent(input$record, {
+        if(status() == "no") { 
+            shinyalert::shinyalert(
+                title = "Вы не авторизованы!", 
+                text = "Войдите в систему чтобы вносить новые записи", 
+                type = "error")
+        } else if(nchar(input$i_name1) == 0 | nchar(input$i_name2) == 0){
+            shinyalert::shinyalert(
+                title = "Некорректные данные", 
+                text = "Имена не могут быть пустыми", 
+                type = "warning")
+        } else if(nchar(input$i_name1) > 15 | nchar(input$i_name2) > 15){
+            shinyalert::shinyalert(
+                title = "Некорректные данные", 
+                text = "Таких длинных имён не бывает", 
+                type = "warning")
+        } else if(nchar(input$i_name1) < 3 | nchar(input$i_name2) < 3){
+            shinyalert::shinyalert(
+                title = "Некорректные данные", 
+                text = "Имена не могут быть слишком короткими", 
+                type = "warning")
+        } else if(
+            str_detect(input$i_name1, "[:digit:]") | 
+            str_detect(input$i_name2, "[:digit:]")
+            ){
+            shinyalert::shinyalert(
+                title = "Некорректные данные", 
+                text = "Имён с цифрами не бывает", 
+                type = "warning")
+        } else if(
+            str_detect(toupper(input$i_name1), stringr::regex("(.)\\1{2,}")) | 
+            str_detect(toupper(input$i_name2), stringr::regex("(.)\\1{2,}"))
+            ){
+            shinyalert::shinyalert(
+                title = "Некорректные данные", 
+                text = "Пожалуйста, вводите существующие имена", 
+                type = "warning")
+        } else {
+            i_last <- data.frame(
+                name1 = input$i_name1, 
+                name2 = input$i_name2, 
+                dat = str_replace_all(as.character(input$i_dat), "-", "/"), 
+                proof = dplyr::case_when(
+                    input$i_proof == "" ~ current_user()$name[[1]], 
+                    TRUE ~ input$i_proof))
+            i_succ <- DBI::dbWriteTable(con, "my_table", i_last, 
+                                        append = TRUE, row.names = FALSE)
+            if(i_succ){
+                showNotification("Записано благополучно!", type = "message")
+            } else {
+                showNotification("Что-то не благополучно...", type = "error")
+            }
+            updateTextInput(session, inputId = "i_name1", value = "")
+            updateTextInput(session, inputId = "i_name2", value = "")
+            updateDateInput(session, inputId = "i_dat", value = NULL)
+            updateTextInput(session, inputId = "i_proof", value = "")
+        }
+    })
 
 # Refresh -----------------------------------------------------------------
     df <- eventReactive(input$refresh, {
@@ -461,10 +460,7 @@ fluidRow(
         h3(r("i_auth.title"), align = "center"),
         br(),
         fluidRow(
-            column(width = 3,
-                HTML(text = case_when(status() == "no" ~ r("i_auth.no"), TRUE ~ r("i_auth.yes")))
-            ),
-            column(3, 
+            column(width = 6,
                 HTML(paste0(
                     "<p>",
                     r("i_auth.text"), 
@@ -472,11 +468,9 @@ fluidRow(
                     r("i_link.text"), 
                     ".</a></p>"))
                 ),
-            column(width = 3, passwordInput("pass", label = NULL, placeholder = r("i_passwd.fill"))), 
-            column(width = 3, 
-                column(width = 6, actionButton("auth", r("i_auth.in"), width = '80%', style="float:left")), # width = '100%'
-                column(width = 6, actionButton("deauth", r("i_auth.out"), width = '80%')) #  width = '100%'
-            )
+            column(width = 2, passwordInput("pass_1", label = NULL, placeholder = r("i_passwd.fill"))), # remove _1 !!!
+            column(width = 2, actionButton("auth_1", r("i_auth.in"), width = '80%', style="float:right")), # remove _1 !!! # , width = '100%'
+            column(width = 2, actionButton("deauth_1", r("i_auth.out"), width = '80%')) # remove _1 !!! # , width = '100%'
         )
      ))
     
@@ -593,24 +587,43 @@ fluidRow(
         # br(),
         uiOutput("i_adm"),
         hr(),
+        # br(),
         uiOutput("i_geo"),
         hr(),
+        # br(),
         uiOutput("i_event"),
         hr(),
+        # br(),
         uiOutput("i_taxa"),
         hr(),
+        # br(),
         uiOutput("i_abu"),
-        hr(),
-        fluidRow(
-            column(width = 4),
-            column(width = 2, actionButton("check", r("i_check"), width = "80%", style="float:left")),
-            column(width = 2, actionButton("record", r("i_record"), width = "80%", style="float:left")),
-            column(width = 2),
-            column(width = 2, actionButton("drop", r("i_drop"), width = "80%", style="float:left"))
-        ),
-        br(),
-        hr(),
-        br()
+        sidebarLayout(
+            sidebarPanel(
+                HTML(paste0("<h3>Авторизация</h3>", 
+                            "<i>Перед вводом собственных данных необходимо авторизоваться. ", 
+                            "Зарегистрироваться и получить пароль можно у", 
+                            "<a href = https://t.me/faunistica_2_bot> телеграм-", 
+                            "бота</a>.</i> <br> ")),
+                passwordInput("pass", label = NULL, placeholder = "Введите пароль"),
+                actionButton("auth", "Авторизоваться"),
+                actionButton("deauth", "Выйти из системы"),
+                HTML("<br> <br>"), 
+                textInput("i_name1", "Чаёвник1"),
+                textInput("i_name2", "Чаёвник2"),
+                dateInput("i_dat", "Дата чаепития", format = "yyyy/mm/dd", weekstart = 1),
+                textInput("i_proof", placeholder = "Ваше имя (опционально)",
+                          label = "Я видел это своими глазами и подтверждаю факт чаепития"),
+                HTML("<br>"),
+                actionButton("record", "Записать!"),
+                HTML("<br>"),
+                HTML("<br>")
+            ), 
+            mainPanel(
+                textOutput("currentstatus"),
+                tags$img(src = "dog.jpeg", width = 500)
+            )
+        )
     ))
 
     
