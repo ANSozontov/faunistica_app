@@ -75,6 +75,9 @@ server <- function(input, output, session) {
     # initial variables (for current session)
     status <- reactiveVal("no")
     
+    holds <- reactiveVal(0)
+    # output$test <- renderPrint(holds())
+    
     popup.info <- reactive({
         tippy(HTML('<p style="font-size:24px;text-align:right">🛈</p>'), 
           tooltip = r("srv_hold"), 
@@ -82,7 +85,12 @@ server <- function(input, output, session) {
           theme = "material")
     })
     
-    shinyjs::disable("deauth")
+    # shinyjs::disable("deauth")
+    # 
+    # shinyjs::disable("unhold_adm")
+    # shinyjs::disable("unhold_geo")
+    # shinyjs::disable("unhold_ev")
+    # shinyjs::disable("unhold_taxa")
     
     current_user <- reactiveVal(NULL)
     users <- reactiveVal({
@@ -125,6 +133,9 @@ server <- function(input, output, session) {
                                                      "! \n \nВозможность записи: ", 
                                                      status()),
                                        type = "success")
+                shinyjs::disable("auth")
+                shinyjs::enable("deauth")
+                shinyjs::disable("pass")
             }
         }
     })
@@ -134,7 +145,6 @@ server <- function(input, output, session) {
         shinyjs::enable("auth")
         shinyjs::disable("deauth")
         shinyjs::enable("pass")
-        status("no")
         output$currentstatus <- renderText(status())
         shinyalert::shinyalert(title = "Выход из системы", 
                                text = paste0("Вы успешно вышли из своей учетной записи!", 
@@ -145,6 +155,10 @@ server <- function(input, output, session) {
                                type = "info")
     })
 
+
+# Check -------------------------------------------------------------------
+
+    
 # Record ------------------------------------------------------------------
     # observeEvent(input$record, {
     #     if(status() == "no") { 
@@ -205,6 +219,17 @@ server <- function(input, output, session) {
     #     }
     # })
 
+
+# Clear / drop ------------------------------------------------------------
+    observeEvent(input$drop, { 
+        if(holds()!=0) { 
+            shinyalert::shinyalert(
+                title = "Невозможно", 
+                text = "Не могу сбросить введённые данные\nЧасть блоков зафиксирована", 
+                type = "warning")
+        }
+    })
+    
 # Refresh -----------------------------------------------------------------
     df <- eventReactive(input$refresh, {
         users(
@@ -448,6 +473,12 @@ fluidRow(
 
 # PAGE statistics ----------------------------------------------------------
     output$p_statistics <- renderUI(tagList(
+        br(), 
+        br(),
+        renderPrint(paste0("hold blocks: ", holds())),
+        br(), 
+        renderPrint(paste0("status = ", status())),
+        br(),
         h3("Здесь пока только статистика по чаепитиям,", align = "center"), 
         h3("но скоро будет реальная наука!", align = "center"), 
         tabsetPanel(
@@ -475,14 +506,13 @@ fluidRow(
             column(width = 3, passwordInput("pass", label = NULL, placeholder = r("i_passwd.fill"))), 
             column(width = 3, 
                 column(width = 6, actionButton("auth", r("i_auth.in"), width = '80%', style="float:left")), # width = '100%'
-                column(width = 6, actionButton("deauth", r("i_auth.out"), width = '80%')) #  width = '100%'
+                column(width = 6, actionButton("deauth", r("i_auth.out"), width = '80%', disabled = TRUE)) #  width = '100%'
             )
         )
      ))
     
 # PAGE input new data: adm ----------------------------------------------------
     output$i_adm <- renderUI(tagList(
-        # hr(),
         h3(r("i_adm.title"), align = "center", style = "font-size: 2em"), 
         br(),
         fluidRow(
@@ -494,11 +524,31 @@ fluidRow(
         ),
         fluidRow(
             column(width = 9), 
-            column(width = 1, popup.info() ),
+            column(width = 1, popup.info()),
             column(width = 1, actionButton("hold_adm", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, actionButton("unhold_adm", "", icon = icon("lock-open"), style="float:left"))
-        ),
+            column(width = 1, actionButton("unhold_adm", "", icon = icon("lock-open"), disabled = TRUE, style="float:left"))
+        )
     ))
+    
+    observeEvent(input$hold_adm, {
+        holds(holds()+1)
+        shinyjs::enable("unhold_adm")
+        shinyjs::disable("country")
+        shinyjs::disable("region")
+        shinyjs::disable("district")
+        shinyjs::disable("loc")
+        shinyjs::disable("hold_adm")
+    })
+    
+    observeEvent(input$unhold_adm, {
+        holds(holds()-1)
+        shinyjs::disable("unhold_adm")
+        shinyjs::enable("country")
+        shinyjs::enable("region")
+        shinyjs::enable("district")
+        shinyjs::enable("loc")
+        shinyjs::enable("hold_adm")
+    })
 
 # PAGE input new data: geo ------------------------------------------------
     output$i_geo <- renderUI(tagList(
@@ -506,7 +556,7 @@ fluidRow(
         br(),
         fluidRow(
             column(width = 3, textInput("place",   r("i_geo1"))), 
-            column(width = 3, textInput("region",    r("i_geo2"))),
+            column(width = 3, textInput("geo.rem",    r("i_geo2"))),
             column(width = 2, textInput("NN",  label = r("i_coords"), placeholder = r("i_geo.fill"))),
             column(width = 1, br(), h4("N")),
             column(width = 3)
@@ -517,10 +567,30 @@ fluidRow(
             column(width = 1, h4("E")), 
             column(width = 1, popup.info() ),
             column(width = 1, actionButton("hold_geo", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, actionButton("unhold_geo", "", icon = icon("lock-open"), style="float:left"))
+            column(width = 1, actionButton("unhold_geo", "", icon = icon("lock-open"), disabled = TRUE, style="float:left"))
         )
     ))
-
+    
+    observeEvent(input$hold_geo, {
+        holds(holds()+1)
+        shinyjs::disable("place")
+        shinyjs::disable("geo.rem")
+        shinyjs::disable("NN")
+        shinyjs::disable("EE")
+        shinyjs::disable("hold_geo")
+        shinyjs::enable("unhold_geo")
+    })
+    
+    observeEvent(input$unhold_geo, {
+        holds(holds()-1)
+        shinyjs::enable("place")
+        shinyjs::enable("geo.rem")
+        shinyjs::enable("NN")
+        shinyjs::enable("EE")
+        shinyjs::enable("hold_geo")
+        shinyjs::disable("unhold_geo")
+    })
+    
 # PAGE input new data: event ----------------------------------------------
     output$i_event <- renderUI(tagList(
         h3(r("i_ev.title"), align = "center", style = "font-size: 2em"), 
@@ -529,7 +599,7 @@ fluidRow(
             column(width = 3, textInput("habitat", r("i_ev.hab"))),
             column(width = 3, dateInput("dat", r("i_ev.date"), startview = "month")),
             column(width = 3, textInput(
-                "Effort", 
+                "effort", 
                 r("i_ev.effort"), 
                 placeholder = r("i_ev.effort_fill"))),
             column(width = 3, textInput("event_rem", r("i_ev.rem")))
@@ -538,9 +608,28 @@ fluidRow(
             column(width = 9), 
             column(width = 1, popup.info() ),
             column(width = 1, actionButton("hold_ev", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, actionButton("unhold_ev", "", icon = icon("lock-open"), style="float:left"))
+            column(width = 1, actionButton("unhold_ev", "", icon = icon("lock-open"), disabled = TRUE, style="float:left"))
         )
     ))
+    
+    observeEvent(input$hold_ev, {
+        holds(holds()+1)
+        shinyjs::disable("habitat")
+        shinyjs::disable("dat")
+        shinyjs::disable("effort")
+        shinyjs::disable("event_rem")
+        shinyjs::enable("unhold_ev")
+        shinyjs::disable("hold_ev")
+    })
+    observeEvent(input$unhold_ev, {
+        holds(holds()-1)
+        shinyjs::enable("habitat")
+        shinyjs::enable("dat")
+        shinyjs::enable("effort")
+        shinyjs::enable("event_rem")
+        shinyjs::enable("hold_ev")
+        shinyjs::disable("unhold_ev")
+    })
 
 # PAGE input new data: taxa -----------------------------------------------
     output$i_taxa <- renderUI(tagList(
@@ -557,9 +646,10 @@ fluidRow(
             column(width = 3, selectInput("sp.def", r("i_taxa.sp.def"), choices = c(`✔`= "yes", `✘` = "no"))), # "species defined"
             column(width = 1, br(), popup.info()),
             column(width = 1, br(), actionButton("hold_taxa", "",  icon = icon("lock"), style="float:right")), 
-            column(width = 1, br(), actionButton("unhold_taxa", "", icon = icon("lock-open"), style="float:left"))
+            column(width = 1, br(), actionButton("unhold_taxa", "", icon = icon("lock-open"), disabled = TRUE, style="float:left"))
         )
     ))
+    
     observeEvent(input$sp.def, {
         if(input$sp.def == "no"){
             updateTextInput(session, "sp", value = NA)
@@ -568,6 +658,31 @@ fluidRow(
         if(input$sp.def == "yes"){
             shinyjs::enable("sp")
         }
+    })
+    
+    observeEvent(input$hold_taxa, {
+        holds(holds()+1)
+        shinyjs::disable("fam")
+        shinyjs::disable("gen")
+        shinyjs::disable("sp")
+        shinyjs::disable("tax.rem")
+        shinyjs::disable("taxa_nsp")
+        shinyjs::disable("sp.def")
+        shinyjs::enable("unhold_taxa")
+        shinyjs::disable("hold_taxa")
+    })
+    
+    observeEvent(input$unhold_taxa, {
+        holds(holds()-1)
+        shinyjs::enable("fam")
+        shinyjs::enable("gen")
+        shinyjs::enable("sp")
+        shinyjs::enable("tax.rem")
+        shinyjs::enable("taxa_nsp")
+        shinyjs::enable("sp.def")
+        updateSelectInput(session, "sp.def", selected = "yes")
+        shinyjs::enable("hold_taxa")
+        shinyjs::disable("unhold_taxa")
     })
     
 # PAGE input new data: amount ---------------------------------------------
@@ -648,6 +763,16 @@ fluidRow(
         )
     ))
     
+
+# Initial actioins --------------------------------------------------------
+    # shinyjs::disable("deauth", asis = TRUE)
+
+    # shinyjs::disable("unhold_adm")
+    # shinyjs::disable("unhold_geo")
+    # shinyjs::disable("unhold_ev")
+    # shinyjs::disable("unhold_taxa")
+    
+    
 }
 
 # UI ----------------------------------------------------------------------
@@ -663,6 +788,7 @@ ui <- fluidPage(
 shinyApp(ui = ui, server = server,  
     options = list(launch.browser = FALSE),
     onStart = function() {
+        
         onStop(function() {
             rm(list = ls())
             dbDisconnect(con)
