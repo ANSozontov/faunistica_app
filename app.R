@@ -346,7 +346,8 @@ fluidRow(
 Институт экологии растений и животных УрО РАН<br>
 <br> 
 <b>Коммуникатор</b><br>
-Описание роли описание роли описание роли описание роли описание роли описание роли")))
+Описание роли описание роли описание роли описание роли описание роли описание роли"))),
+HTML('<img src="sozontov.jpg" data-action="zoom" width="300"/>')
     ))
 
 # PAGE scientific profit ---------------------------------------------------
@@ -778,6 +779,8 @@ fluidRow(
 # UI ----------------------------------------------------------------------
 ui <- fluidPage(
     shinyjs::useShinyjs(),
+    HTML('<link href="zoom.css" rel="stylesheet">'),
+    HTML('<script src="zoom.js"></script>'),
     tags$style(type="text/css", "body {padding-top: 70px;}"),
     tags$head(tags$link(rel="shortcut icon", 
                         href="icons8-favicon-96.png")),
