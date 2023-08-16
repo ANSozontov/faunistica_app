@@ -1,6 +1,5 @@
-.Rproj
+*.Rproj
 .Rproj.user
-.Rhistory
-.RData
+*.Rhistory
+*.RData
 .Ruserdata
-fau_test.Rproj
