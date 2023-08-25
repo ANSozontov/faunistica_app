@@ -76,6 +76,7 @@ server <- function(input, output, session) {
     status <- reactiveVal("no")
     
     holds <- reactiveVal(0)
+    # output$test <- renderPrint(holds())
     
     popup.info <- reactive({
         tippy(HTML('<p style="font-size:24px;text-align:right">🛈</p>'), 
@@ -151,6 +152,7 @@ server <- function(input, output, session) {
                 shinyalert::shinyalert("Успех!", "Ошибок не найдено", type = "success")
                 return("ok")
             }
+        
     }
     
     # shinyjs::disable("deauth")
@@ -161,6 +163,17 @@ server <- function(input, output, session) {
     # shinyjs::disable("unhold_taxa")
     
     current_user <- reactiveVal(NULL)
+    users <- reactiveVal({
+        DBI::dbGetQuery(con,"SELECT * FROM my_table") %>% 
+        select(name1, name2) %>% 
+        as_vector() %>% 
+        unique() %>% 
+        sort()
+    })
+    
+    # output$names_selector <- renderUI({
+    #     selectInput("usr", "Чаёвник", choices = users()) 
+    # })
     
     
 # Log in ------------------------------------------------------------------
@@ -212,8 +225,8 @@ server <- function(input, output, session) {
 
 # Check -------------------------------------------------------------------
     observeEvent(input$check, {
-        current_check <- my_check()
-        if(current_check == "ok"){ 
+        a <- my_check()
+        if(a == "ok"){ 
             showNotification("Все проверки пройдены!", type = "message")
         } else { 
             showNotification("Есть ошибки", type = "error")    
@@ -223,17 +236,64 @@ server <- function(input, output, session) {
     })
     
 # Record ------------------------------------------------------------------
-    observeEvent(input$record, {
-        current_check <- my_check()
-        if(current_check == "ok"){ 
-            showNotification("Все проверки пройдены!", type = "message")
-        } else { 
-            showNotification("Есть ошибки", type = "error")
-            
-        }
-        
-        
-    })
+    # observeEvent(input$record, {
+    #     if(status() == "no") { 
+    #         shinyalert::shinyalert(
+    #             title = "Вы не авторизованы!", 
+    #             text = "Войдите в систему чтобы вносить новые записи", 
+    #             type = "error")
+    #     } else if(nchar(input$i_name1) == 0 | nchar(input$i_name2) == 0){
+    #         shinyalert::shinyalert(
+    #             title = "Некорректные данные", 
+    #             text = "Имена не могут быть пустыми", 
+    #             type = "warning")
+    #     } else if(nchar(input$i_name1) > 15 | nchar(input$i_name2) > 15){
+    #         shinyalert::shinyalert(
+    #             title = "Некорректные данные", 
+    #             text = "Таких длинных имён не бывает", 
+    #             type = "warning")
+    #     } else if(nchar(input$i_name1) < 3 | nchar(input$i_name2) < 3){
+    #         shinyalert::shinyalert(
+    #             title = "Некорректные данные", 
+    #             text = "Имена не могут быть слишком короткими", 
+    #             type = "warning")
+    #     } else if(
+    #         str_detect(input$i_name1, "[:digit:]") | 
+    #         str_detect(input$i_name2, "[:digit:]")
+    #         ){
+    #         shinyalert::shinyalert(
+    #             title = "Некорректные данные", 
+    #             text = "Имён с цифрами не бывает", 
+    #             type = "warning")
+    #     } else if(
+    #         str_detect(toupper(input$i_name1), stringr::regex("(.)\\1{2,}")) | 
+    #         str_detect(toupper(input$i_name2), stringr::regex("(.)\\1{2,}"))
+    #         ){
+    #         shinyalert::shinyalert(
+    #             title = "Некорректные данные", 
+    #             text = "Пожалуйста, вводите существующие имена", 
+    #             type = "warning")
+    #     } else {
+    #         i_last <- data.frame(
+    #             name1 = input$i_name1, 
+    #             name2 = input$i_name2, 
+    #             dat = str_replace_all(as.character(input$i_dat), "-", "/"), 
+    #             proof = dplyr::case_when(
+    #                 input$i_proof == "" ~ current_user()$name[[1]], 
+    #                 TRUE ~ input$i_proof))
+    #         i_succ <- DBI::dbWriteTable(con, "my_table", i_last, 
+    #                                     append = TRUE, row.names = FALSE)
+    #         if(i_succ){
+    #             showNotification("Записано благополучно!", type = "message")
+    #         } else {
+    #             showNotification("Что-то не благополучно...", type = "error")
+    #         }
+    #         updateTextInput(session, inputId = "i_name1", value = "")
+    #         updateTextInput(session, inputId = "i_name2", value = "")
+    #         updateDateInput(session, inputId = "i_dat", value = NULL)
+    #         updateTextInput(session, inputId = "i_proof", value = "")
+    #     }
+    # })
 
 
 # Clear / drop ------------------------------------------------------------
@@ -246,6 +306,42 @@ server <- function(input, output, session) {
         }
     })
     
+# Refresh -----------------------------------------------------------------
+    df <- eventReactive(input$refresh, {
+        users(
+            DBI::dbGetQuery(con,"SELECT * FROM my_table") %>% 
+                    select(name1, name2) %>% 
+                    as_vector() %>% 
+                    unique() %>% 
+                    sort()
+        )
+        
+        output$little_title <- renderUI({
+            paste0("Результат. Для ",
+            name_toshow(),
+            " найдены следующие чаепития:")})
+        
+        updateSelectInput(session, "usr",
+                          choices = users(), 
+                          selected = input$usr
+        )
+        
+        DBI::dbGetQuery(con,"SELECT * FROM my_table") %>% 
+            filter(name1 == input$usr | name2 == input$usr) %>% 
+            transmute(
+                `С кем:` = case_when(name1 == input$usr ~ name2, TRUE ~ name1), 
+                `Когда:` = as.character(dat), 
+                `Подтверждает:` = proof)
+    })
+    
+    output$res_table <- renderTable({slice(df(), 1:input$rowstoshow)})
+    
+    observeEvent(input$refresh, {
+        updateNumericInput(session, inputId = "rowstoshow", 
+                           max = nrow(df()), value = nrow(df()))
+    })
+    
+    name_toshow <- eventReactive(input$refresh, {input$usr})
 
 # PAGE home ----------------------------------------------------------------
     output$p_home <- renderUI(tagList(
