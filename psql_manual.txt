@@ -1,3 +1,0 @@
-# backup database 
-
-# deploy DB from backup
